@@ -1,0 +1,12 @@
+feat: configure Alembic migrations with Docker PostgreSQL setup
+
+- Add all required dependencies to requirements.txt
+  (alembic, psycopg2-binary, python-jose, python-multipart, etc.)
+- Fix Dockerfile layer order for efficient caching
+- Configure alembic/env.py to use DATABASE_URL from environment
+- Add postgresql:// to postgresql+psycopg2:// driver fix
+- Copy missing script.py.mako template into alembic/
+- Generate and apply initial schema migration (613fcf2ad7fd)
+- All 7 tables successfully created in PostgreSQL
+
+Stage 2 Complete ✅
