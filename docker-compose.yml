@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: adaptlab
+      POSTGRES_USER: adaptlab
+      POSTGRES_PASSWORD: adaptlab
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U adaptlab -d adaptlab"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://adaptlab:adaptlab@postgres:5432/adaptlab
+      - SECRET_KEY=supersecretkey_change_me
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    # Uses node image to run Vite locally for hot-reload
+    image: node:20-alpine
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+    # Assumes dependencies are installed, or install them on startup
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+
+  sandbox:
+    image: python:3.11-slim
+    # Keeps the container running so you can exec into it or run jobs
+    command: tail -f /dev/null
+    network_mode: none
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 64M
+    volumes:
+      - ./sandbox:/app
+
+volumes:
+  postgres_data:
