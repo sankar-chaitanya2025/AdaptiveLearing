@@ -8,6 +8,7 @@ from models.submission import Submission
 from services.problem_service import get_problem_by_id, get_problems, select_problem
 from services.capability_service import update_capability
 from services.sandbox import run_code
+from ai.brain_a import evaluate_submission
 
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 
@@ -24,7 +25,7 @@ class SubmissionRequest(BaseModel):
     code: str
 
 @router.post("")
-def create_submission(request: SubmissionRequest, db: Session = Depends(get_db)):
+async def create_submission(request: SubmissionRequest, db: Session = Depends(get_db)):
     try:
         user_uuid = uuid.UUID(request.user_id)
         problem_uuid = uuid.UUID(request.problem_id)
@@ -36,11 +37,11 @@ def create_submission(request: SubmissionRequest, db: Session = Depends(get_db))
         raise HTTPException(status_code=404, detail="Problem not found")
 
     visible_res = run_code(request.code, problem.visible_tests)
-    if visible_res.get("error") and visible_res["error"] != "timeout":
+    if visible_res.get("error") and visible_res["error"] not in ("timeout", "no output", "parse error"):
         raise HTTPException(status_code=500, detail="Sandbox error: " + visible_res["error"])
 
     hidden_res = run_code(request.code, problem.hidden_tests)
-    if hidden_res.get("error") and hidden_res["error"] != "timeout":
+    if hidden_res.get("error") and hidden_res["error"] not in ("timeout", "no output", "parse error"):
         raise HTTPException(status_code=500, detail="Sandbox error: " + hidden_res["error"])
 
     visible_score = visible_res.get("score", 0.0)
@@ -62,9 +63,18 @@ def create_submission(request: SubmissionRequest, db: Session = Depends(get_db))
             db=db
         )
 
-    brain_a_feedback = "Good attempt. Review edge cases."
-
+    # Build combined sandbox result for Brain A
     student_vector = {problem.topic: hidden_score}
+    sandbox_result = {"visible": visible_res, "hidden": hidden_res}
+
+    # Brain A LLM evaluation — never crashes submission
+    brain_a_result = await evaluate_submission(
+        problem=problem,
+        student_vector=student_vector,
+        code=request.code,
+        sandbox_result=sandbox_result,
+    )
+
     available_problems = get_problems(db)
     next_problem = select_problem(
         student_vector=student_vector,
@@ -79,7 +89,7 @@ def create_submission(request: SubmissionRequest, db: Session = Depends(get_db))
         code=request.code,
         visible_score=visible_score,
         hidden_score=hidden_score,
-        brain_a_feedback=brain_a_feedback,
+        brain_a_feedback=brain_a_result.feedback,
         gamed=gamed
     )
     db.add(submission)
@@ -89,6 +99,8 @@ def create_submission(request: SubmissionRequest, db: Session = Depends(get_db))
         "visible_score": visible_score,
         "hidden_score": hidden_score,
         "gamed": gamed,
-        "feedback": brain_a_feedback,
-        "next_problem_id": next_problem_id
+        "feedback": brain_a_result.feedback,
+        "call_brain_b": brain_a_result.call_brain_b,
+        "failure_mode": brain_a_result.failure_mode,
+        "next_problem_id": next_problem_id,
     }

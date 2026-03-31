@@ -1,0 +1,16 @@
+feat(stage-5): implement submission pipeline with sandboxed code execution
+
+- Add POST /submissions endpoint with full scoring logic
+- Integrate Python subprocess sandbox replacing Docker-in-Docker approach
+- Implement anti-gaming detection (visible_score > 0.8 and hidden_score < 0.3)
+- Wire capability vector update on non-gamed submissions
+- Integrate Gaussian problem selector for next_problem_id recommendation
+- Add get_db dependency injection pattern consistent with problems router
+- Return structured response: visible_score, hidden_score, gamed, feedback, next_problem_id
+
+Sandbox executes student code via python3 subprocess with 2s timeout and
+score computed against visible and hidden test cases independently.
+Anti-gaming check skips capability update when memorization is detected.
+
+Closes Stage 5 checkpoint: correct solution scores 1.0, hardcoded solution
+flags gamed=true, infinite loop times out with score 0.
