@@ -1,0 +1,7 @@
+feat(problems): Gaussian utility selector + 49-problem seed data
+
+- Add gaussian_utility() centered at estimated_success=1.0
+- Implement select_problem() with Gaussian-scored ranking
+- Seed 49 problems across 10 topics with calibrated difficulties
+- Expose GET /problems and POST /problems/select endpoints
+- Fix inverted Gaussian formula (peak now correctly at perfect match)

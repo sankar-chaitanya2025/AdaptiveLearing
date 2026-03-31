@@ -29,6 +29,7 @@ services:
       - OLLAMA_HOST=http://host.docker.internal:11434
     volumes:
       - ./backend:/app
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,7 +48,8 @@ services:
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
 
   sandbox:
-    image: python:3.11-slim
+    build: ./sandbox
+    image: adaptlab-sandbox
     # Keeps the container running so you can exec into it or run jobs
     command: tail -f /dev/null
     network_mode: none
