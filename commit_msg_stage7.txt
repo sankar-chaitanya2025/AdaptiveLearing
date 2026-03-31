@@ -1,0 +1,8 @@
+feat(stage-7): Brain B Socratic-Zero Teacher Oracle V(q,y)+G(q,yfail)
+
+- Implement paper Appendix A.2/A.3 prompts exactly
+- 4 functions: verify→classify→socratic→refine [paper oracle + AdaptLab dialogue]
+- ZPD zones + Gaussian utility U(q') μ=0.5 σ=0.2 [Eq.6]
+- PlatoLog quadruple (q,yfail,q',U) for Stage 9 WSFT [Eq.7]
+- qwen3:8b thinking mode ON (235B→8B adaptation)
+- sq=visible_passed/visible_total binary verification

@@ -1,0 +1,18 @@
+feat(stage-6): integrate Brain A real-time evaluator via Ollama
+
+- Add backend/ai/brain_a.py with BrainAResult dataclass and async evaluate_submission()
+- Build /no_think prompt template for qwen3:1.7b with problem, student capability, code, and sandbox context
+- Add Ollama REST integration using httpx with env-driven OLLAMA_HOST defaulting to host.docker.internal
+- Implement JSON parsing with think-block stripping and one retry on timeout/parse failure
+- Add graceful fallback to prevent submission failures when Brain A is unavailable
+- Update submissions endpoint to call Brain A after sandbox execution
+- Replace hardcoded feedback with Brain A generated one-line feedback
+- Return call_brain_b and failure_mode in submission response
+- Keep sandbox scores as ground truth and preserve Stage 5 behavior
+- Add backend/ai package initialization for imports
+
+Stage 6 checkpoint completed:
+- Brain A returns valid JSON within target latency
+- Feedback is one sentence and no spoilers
+- call_brain_b is triggered for low-score submissions
+- failure_mode is constrained to valid tags

@@ -2,21 +2,19 @@ import os
 import sys
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
+from sqlalchemy import engine_from_config, pool
 from alembic import context
 
-# Working directory is /app inside Docker
-sys.path.insert(0, '/app')
+# 1. Setup Path so Alembic can find your 'database.py' and 'models/'
+# This looks one folder up from the alembic folder
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Import all models from backend/models/__init__.py so autogenerate detects all tables
-from database import Base
-from models import *
-
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
+# 2. Import your Database Base and ALL Models
+# Importing models here is what makes 'autogenerate' work!
+from database import Base, DATABASE_URL
+from models.dialogue import DialogueSession  # Ensure the new model is loaded
+# If you have an __init__.py in models that imports everything, use:
+# from models import * # this is the Alembic Config object
 config = context.config
 
 # Interpret the config file for Python logging.
@@ -26,9 +24,23 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 def get_url():
-    url = os.environ.get("DATABASE_URL", "").replace(
-        "postgresql://", "postgresql+psycopg2://"
-    )
+    """
+    Smart URL logic:
+    1. Grabs the URL from your database.py or environment.
+    2. If running on Windows (localhost), it fixes the 'postgres' host name.
+    3. Ensures the psycopg2 driver is specified.
+    """
+    url = os.environ.get("DATABASE_URL", DATABASE_URL)
+    
+    # Bridge: If we are running migrations from Windows but the DB is in Docker
+    # We must talk to localhost:5432, not the service name 'postgres'
+    if "postgres:5432" in url and os.name == 'nt':
+        url = url.replace("postgres:5432", "localhost:5432")
+    
+    # Ensure the driver is correct
+    if url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+psycopg2://")
+        
     return url
 
 def run_migrations_offline() -> None:
@@ -42,13 +54,16 @@ def run_migrations_offline() -> None:
     )
 
     with context.begin_transaction():
+        # Added safeguard for UUID extension if needed by your schema
         context.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
         context.run_migrations()
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
-    configuration = config.get_section(config.config_ini_section, {})
+    # Build the configuration dict manually to override the 'placeholder'
+    configuration = config.get_section(config.config_ini_section) or {}
     configuration["sqlalchemy.url"] = get_url()
+    
     connectable = engine_from_config(
         configuration,
         prefix="sqlalchemy.",
@@ -57,7 +72,8 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection, 
+            target_metadata=target_metadata
         )
 
         with context.begin_transaction():

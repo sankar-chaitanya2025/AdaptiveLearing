@@ -9,6 +9,7 @@ from services.problem_service import get_problem_by_id, get_problems, select_pro
 from services.capability_service import update_capability
 from services.sandbox import run_code
 from ai.brain_a import evaluate_submission
+from ai.brain_b import BrainB
 
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 
@@ -75,6 +76,20 @@ async def create_submission(request: SubmissionRequest, db: Session = Depends(ge
         sandbox_result=sandbox_result,
     )
 
+    # Brain B Socratic pipeline — triggered when Brain A flags it
+    brain_b_data = None
+    plato_logged = False
+    if brain_a_result.call_brain_b:
+        brain_b = BrainB()
+        brain_b_data = await brain_b.full_pipeline(
+            problem=problem,
+            code=request.code,
+            sandbox_result=sandbox_result,
+            brain_a_failure_mode=brain_a_result.failure_mode,
+            db=db,
+        )
+        plato_logged = brain_b_data.get("refined_problem") is not None
+
     available_problems = get_problems(db)
     next_problem = select_problem(
         student_vector=student_vector,
@@ -95,7 +110,7 @@ async def create_submission(request: SubmissionRequest, db: Session = Depends(ge
     db.add(submission)
     db.commit()
 
-    return {
+    response = {
         "visible_score": visible_score,
         "hidden_score": hidden_score,
         "gamed": gamed,
@@ -104,3 +119,10 @@ async def create_submission(request: SubmissionRequest, db: Session = Depends(ge
         "failure_mode": brain_a_result.failure_mode,
         "next_problem_id": next_problem_id,
     }
+
+    if brain_b_data:
+        response["brain_b"] = brain_b_data
+        response["plato_logged"] = plato_logged
+
+    return response
+
