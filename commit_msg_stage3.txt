@@ -1,0 +1,10 @@
+feat: implement Stage 3 capability engine
+
+- Confidence-weighted alpha using solve speed, hint penalty, attempt factor
+- EMA score updates per topic stored in PostgreSQL
+- ZPD zone classification (mastered / learning_zone / need_support)
+- PACB recursive prerequisite backtracking via TOPIC_GRAPH
+- POST /capability/update and GET /capability/vector/{user_id} endpoints
+- Verified: PACB correctly redirects dp -> recursion on weak prerequisite
+
+Stage 3 Complete
