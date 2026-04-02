@@ -13,6 +13,12 @@ from api.dialogue import router as dialogue_router
 # --- Stage 9: Plato Offline Generator Pipeline ---
 from api.plato_admin import router as plato_admin_router
 
+# --- Stage 12: User Study Module ---
+from api.study import router as study_router
+
+# --- Stage 13: Session + Fatigue Detection ---
+from api.sessions import router as sessions_router
+
 app = FastAPI(title="AdaptLab API", version="0.1.0")
 
 # Enable CORS for the Vite frontend (React/Vite typically runs on 5173)
@@ -35,7 +41,13 @@ app.include_router(dialogue_router)
 # Plato admin endpoints (operator-only; protect with PLATO_ADMIN_KEY in prod)
 app.include_router(plato_admin_router)
 
+# Stage 12: User Study Module (pre-test, post-test, confidence, export CSV)
+app.include_router(study_router)
+
+# Stage 13: Session management + fatigue detection + instructor audit
+app.include_router(sessions_router)
+
 @app.get("/health")
 def health_check():
     """Simple endpoint to verify the backend is breathing."""
-    return {"status": "ok", "stage": 9, "mode": "Plato"}
+    return {"status": "ok", "stage": 13, "mode": "FatigueDetection"}

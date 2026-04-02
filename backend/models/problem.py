@@ -1,6 +1,6 @@
 import uuid
 import enum
-from sqlalchemy import String, Float, Enum, text, JSON
+from sqlalchemy import String, Float, Enum, text, JSON, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
 from typing import List, TYPE_CHECKING, Any
@@ -25,6 +25,9 @@ class Problem(Base):
     hidden_tests: Mapped[dict[str, Any]] = mapped_column(JSON)
     prerequisite_topics: Mapped[dict[str, Any]] = mapped_column(JSON)
     created_by: Mapped[CreatedBy] = mapped_column(Enum(CreatedBy, name="createdby", native_enum=False))
+    # Stage 12: isolates study problems from the practice/generator paths.
+    # Brain B, Plato, and get_problems() must filter is_study_only=False.
+    is_study_only: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
     submissions: Mapped[List["Submission"]] = relationship(back_populates="problem", cascade="all, delete-orphan")
     plato_logs: Mapped[List["PlatoLog"]] = relationship(back_populates="original_problem", cascade="all, delete-orphan")

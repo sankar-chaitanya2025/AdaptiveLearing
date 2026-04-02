@@ -21,8 +21,15 @@ from models import (  # noqa: F401  (side-effects: registers mappers with Base.m
     Session,
     PlatoLog,   # Stage 9 extended model
     StudyMetric,
+    # Stage 12 study module
+    StudyTestSession,
+    StudyTestSubmission,
+    StudyConfidenceSurvey,
+    # Stage 13 fatigue detection
+    FatigueEvent,
 )
 from models.dialogue import DialogueSession  # Stage 8 model
+
 config = context.config
 
 # Interpret the config file for Python logging.

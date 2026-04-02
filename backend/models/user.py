@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import String, Enum, text, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
-from typing import List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING, Optional
 import enum
 
 if TYPE_CHECKING:
@@ -24,6 +24,8 @@ class User(Base):
     role: Mapped[UserRole] = mapped_column(Enum(UserRole, name="userrole", native_enum=False), default=UserRole.student)
     hashed_password: Mapped[str] = mapped_column(String)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
+    # Stage 12: study group assignment (null = not yet assigned)
+    study_group: Mapped[Optional[str]] = mapped_column(String(16), nullable=True, default=None)
 
     # Relationships
     capability_vectors: Mapped[List["CapabilityVector"]] = relationship(back_populates="user", cascade="all, delete-orphan")
