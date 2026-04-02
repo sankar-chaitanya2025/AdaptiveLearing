@@ -26,9 +26,23 @@ services:
     environment:
       - DATABASE_URL=postgresql://adaptlab:adaptlab@postgres:5432/adaptlab
       - SECRET_KEY=supersecretkey_change_me
-      - OLLAMA_HOST=http://host.docker.internal:11434
+      - OLLAMA_HOST=host.docker.internal:11434
+      # --- Stage 9: Plato pipeline config ---
+      - PLATO_MODEL=qwen3:1.7b
+      - PLATO_MIN_LOGS=200
+      - PLATO_MIN_UTILITY_TRAIN=0.3
+      - PLATO_MIN_UTILITY_INSERT=0.6
+      - PLATO_VARIANTS_PER_PROBLEM=3
+      - PLATO_MU=0.5
+      - PLATO_SIGMA=0.2
+      - PLATO_MASTERED_THRESHOLD=0.75
+      - PLATO_ARTIFACT_DIR=/app/plato_artifacts
+      - PLATO_OLLAMA_TIMEOUT=120.0
+      # Set PLATO_ADMIN_KEY to protect /admin/plato/* in production
+      - PLATO_ADMIN_KEY=
     volumes:
       - ./backend:/app
+      - plato_artifacts:/app/plato_artifacts
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       postgres:
@@ -63,3 +77,4 @@ services:
 
 volumes:
   postgres_data:
+  plato_artifacts:

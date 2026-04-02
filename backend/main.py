@@ -10,6 +10,9 @@ from routers.submissions import router as submissions_router
 # Note: Ensure the path matches the folder you just created!
 from api.dialogue import router as dialogue_router
 
+# --- Stage 9: Plato Offline Generator Pipeline ---
+from api.plato_admin import router as plato_admin_router
+
 app = FastAPI(title="AdaptLab API", version="0.1.0")
 
 # Enable CORS for the Vite frontend (React/Vite typically runs on 5173)
@@ -29,7 +32,10 @@ app.include_router(submissions_router)
 # This plugs the Socratic loop into your server
 app.include_router(dialogue_router)
 
+# Plato admin endpoints (operator-only; protect with PLATO_ADMIN_KEY in prod)
+app.include_router(plato_admin_router)
+
 @app.get("/health")
 def health_check():
     """Simple endpoint to verify the backend is breathing."""
-    return {"status": "ok", "stage": 8, "mode": "Socratic"}
+    return {"status": "ok", "stage": 9, "mode": "Plato"}

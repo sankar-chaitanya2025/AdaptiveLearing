@@ -12,9 +12,17 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 # 2. Import your Database Base and ALL Models
 # Importing models here is what makes 'autogenerate' work!
 from database import Base, DATABASE_URL
-from models.dialogue import DialogueSession  # Ensure the new model is loaded
-# If you have an __init__.py in models that imports everything, use:
-# from models import * # this is the Alembic Config object
+# Import ALL models so autogenerate detects every table and column.
+from models import (  # noqa: F401  (side-effects: registers mappers with Base.metadata)
+    User,
+    CapabilityVector,
+    Problem,
+    Submission,
+    Session,
+    PlatoLog,   # Stage 9 extended model
+    StudyMetric,
+)
+from models.dialogue import DialogueSession  # Stage 8 model
 config = context.config
 
 # Interpret the config file for Python logging.
